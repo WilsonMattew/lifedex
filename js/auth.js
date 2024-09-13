@@ -1,7 +1,11 @@
 // Firebase configuration
 const firebaseConfig = {
-  // Your Firebase configuration object goes here
-  // You can find this in your Firebase project settings
+  apiKey: "AIzaSyAIkxha_buuEwbiDN0BNsQIcYJenHB1ofU",
+  authDomain: "sample-lifedex.firebaseapp.com",
+  projectId: "sample-lifedex",
+  storageBucket: "sample-lifedex.appspot.com",
+  messagingSenderId: "863689370916",
+  appId: "1:863689370916:web:4ccf017a92dc115405d7b1"
 };
 
 // Initialize Firebase
