@@ -6,7 +6,7 @@ body {
     padding: 0;
 }
 
-#camera-container {
+#auth-container, #camera-container {
     margin: 20px auto;
     padding: 20px;
     background: #fff;
