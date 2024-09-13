@@ -4,7 +4,7 @@ import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChang
 // Your web app's Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyAIkxha_buuEwbiDN0BNsQIcYJenHB1ofU",
-    authDomain: "sample-lifedex.firebaseapp.com",
+    authDomain: "sample-lifedex.web.app",
     projectId: "sample-lifedex",
     storageBucket: "sample-lifedex.appspot.com",
     messagingSenderId: "863689370916",
