@@ -40,23 +40,17 @@ function updateUI() {
             break;
         case 'profile':
             if (app.isLoggedIn) {
-                mainContent.innerHTML = '<h2>Your Profile</h2><p>Profile information will be displayed here.</p>';
+                mainContent.innerHTML = `
+                    <h2>Your Profile</h2>
+                    <p>Welcome, ${firebase.auth().currentUser.displayName}!</p>
+                    <button id="logoutBtn">Logout</button>
+                `;
+                document.getElementById('logoutBtn').addEventListener('click', logout);
             } else {
                 mainContent.innerHTML = '<h2>Login Required</h2><button id="loginBtn">Login with Google</button>';
                 document.getElementById('loginBtn').addEventListener('click', loginWithGoogle);
             }
             break;
-    }
-}
-
-// Handle image upload
-function handleImageUpload(event) {
-    const file = event.target.files[0];
-    if (file) {
-        // Here you would typically send the file to your image recognition API
-        console.log('Image uploaded:', file.name);
-        // For now, we'll just display a placeholder result
-        document.getElementById('app').innerHTML += '<p>Analyzing image...</p>';
     }
 }
 
@@ -76,3 +70,6 @@ function init() {
 
 // Run the init function when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', init);
+
+// Make updateUI function globally accessible
+window.updateUI = updateUI;
