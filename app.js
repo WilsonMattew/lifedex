@@ -1,85 +1,78 @@
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js';
-import { getAuth, signInWithPopup, signOut, GoogleAuthProvider, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js';
+// app.js
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyAIkxha_buuEwbiDN0BNsQIcYJenHB1ofU",
-    authDomain: "sample-lifedex.firebaseapp.com",
-    projectId: "sample-lifedex",
-    storageBucket: "sample-lifedex.appspot.com",
-    messagingSenderId: "863689370916",
-    appId: "1:863689370916:web:4ccf017a92dc115405d7b1",
-    measurementId: "G-V08XENDCFH"
+// Check if service workers are supported
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+                console.log('Service Worker registered successfully:', registration.scope);
+            })
+            .catch(error => {
+                console.log('Service Worker registration failed:', error);
+            });
+    });
+}
+
+// Application state
+const app = {
+    isLoggedIn: false,
+    currentPage: 'home'
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
+// Page routing
+function navigateTo(page) {
+    app.currentPage = page;
+    updateUI();
+}
 
-// Handle login
-document.getElementById('login').addEventListener('click', () => {
-    signInWithPopup(auth, provider)
-        .then((result) => {
-            console.log('User signed in:', result.user);
-            document.getElementById('auth-container').style.display = 'none';
-            document.getElementById('camera-container').style.display = 'block';
-        })
-        .catch((error) => {
-            console.error('Error signing in:', error);
-        });
-});
+// Update UI based on current state
+function updateUI() {
+    const mainContent = document.getElementById('app');
+    mainContent.innerHTML = ''; // Clear current content
 
-// Handle logout
-document.getElementById('logout').addEventListener('click', () => {
-    signOut(auth)
-        .then(() => {
-            console.log('User signed out');
-            document.getElementById('auth-container').style.display = 'block';
-            document.getElementById('camera-container').style.display = 'none';
-        })
-        .catch((error) => {
-            console.error('Error signing out:', error);
-        });
-});
-
-// Handle authentication state changes
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        document.getElementById('auth-container').style.display = 'none';
-        document.getElementById('camera-container').style.display = 'block';
-    } else {
-        document.getElementById('auth-container').style.display = 'block';
-        document.getElementById('camera-container').style.display = 'none';
+    switch (app.currentPage) {
+        case 'home':
+            mainContent.innerHTML = '<h2>Welcome to LifeDex</h2><p>Explore the world around you!</p>';
+            break;
+        case 'scan':
+            mainContent.innerHTML = '<h2>Scan an Object</h2><input type="file" accept="image/*" id="imageUpload">';
+            document.getElementById('imageUpload').addEventListener('change', handleImageUpload);
+            break;
+        case 'profile':
+            if (app.isLoggedIn) {
+                mainContent.innerHTML = '<h2>Your Profile</h2><p>Profile information will be displayed here.</p>';
+            } else {
+                mainContent.innerHTML = '<h2>Login Required</h2><button id="loginBtn">Login with Google</button>';
+                document.getElementById('loginBtn').addEventListener('click', loginWithGoogle);
+            }
+            break;
     }
-});
+}
 
-// Webcam capture logic
-document.addEventListener('DOMContentLoaded', () => {
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const context = canvas.getContext('2d');
-    const result = document.getElementById('result');
-    const capturedImage = document.getElementById('captured-image');
-    const snapButton = document.getElementById('snap');
+// Handle image upload
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        // Here you would typically send the file to your image recognition API
+        console.log('Image uploaded:', file.name);
+        // For now, we'll just display a placeholder result
+        document.getElementById('app').innerHTML += '<p>Analyzing image...</p>';
+    }
+}
 
-    // Request access to the webcam
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            video.srcObject = stream;
-            video.play();
-        })
-        .catch(error => {
-            console.error('Error accessing webcam:', error);
+// Initialize the application
+function init() {
+    // Set up navigation event listeners
+    document.querySelectorAll('nav a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            navigateTo(e.target.getAttribute('href').substr(1));
         });
-
-    // Capture a photo
-    snapButton.addEventListener('click', () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = canvas.toDataURL('image/png');
-        capturedImage.src = imageData;
-        result.style.display = 'block';
     });
-});
+
+    // Initial UI update
+    updateUI();
+}
+
+// Run the init function when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', init);
