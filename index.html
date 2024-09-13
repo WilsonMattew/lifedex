@@ -3,23 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Object Identifier</title>
+    <title>Webcam Demo</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Object Identifier</h1>
-    <div id="auth-container">
-        <button id="login">Login with Google</button>
-    </div>
-    <div id="app-container" style="display: none;">
+    <h1>Webcam Capture Demo</h1>
+    <div id="camera-container">
         <video id="video" autoplay></video>
-        <button id="snap">Snap Photo</button>
+        <button id="snap">Capture Photo</button>
         <canvas id="canvas" style="display: none;"></canvas>
-        <div id="result"></div>
+        <div id="result">
+            <p>Captured Image:</p>
+            <img id="captured-image" src="" alt="Captured Image">
+        </div>
     </div>
-    <button id="logout" style="display: none;">Logout</button>
-    <!-- Include Firebase scripts as modules -->
-    <script type="module" src="firebase.js"></script>
-    <script type="module" src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
