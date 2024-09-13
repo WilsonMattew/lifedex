@@ -27,23 +27,62 @@ function handleImageUpload(event) {
 }
 
 // Function to send image to recognition API
-function recognizeImage(imageBlob) {
-  // Here you would typically send the imageBlob to your chosen image recognition API
-  // For this example, we'll use a placeholder function
-  console.log('Sending image for recognition...');
-  
-  // Simulating API call with setTimeout
-  setTimeout(() => {
-    const mockResult = {
-      name: 'Golden Retriever',
-      confidence: 0.95,
-      category: 'Dog',
-      details: 'The Golden Retriever is a large-sized breed of dog bred as gun dogs to retrieve shot waterfowl such as ducks and upland game birds during hunting and shooting parties, and were named retriever because of their ability to retrieve shot game undamaged.'
-    };
-    displayRecognitionResult(mockResult);
-  }, 2000);
-}
+async function recognizeImage(imageBlob) {
+  const apiKey = 'AIzaSyBhoxew_lxyIHDWUlV4JDJcLAhdu7Housg';
+  const apiUrl = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
 
+  // Convert blob to base64
+  const base64Image = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(imageBlob);
+  });
+
+  const requestBody = {
+    requests: [
+      {
+        image: {
+          content: base64Image
+        },
+        features: [
+          {
+            type: 'LABEL_DETECTION',
+            maxResults: 5
+          }
+        ]
+      }
+    ]
+  };
+
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      body: JSON.stringify(requestBody),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const data = await response.json();
+    const result = data.responses[0].labelAnnotations[0];
+
+    displayRecognitionResult({
+      name: result.description,
+      confidence: result.score,
+      category: 'Object',
+      details: 'Additional details would go here.'
+    });
+  } catch (error) {
+    console.error('Error during image recognition:', error);
+    displayRecognitionResult({
+      name: 'Error',
+      confidence: 0,
+      category: 'Error',
+      details: 'An error occurred during image recognition.'
+    });
+  }
+}
 // Function to display recognition result
 function displayRecognitionResult(result) {
   const resultDiv = document.createElement('div');
