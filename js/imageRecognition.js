@@ -28,7 +28,7 @@ function handleImageUpload(event) {
 
 // Function to send image to recognition API
 async function recognizeImage(imageBlob) {
-  const apiKey = 'AIzaSyBhoxew_lxyIHDWUlV4JDJcLAhdu7Housg';
+  const apiKey = 'AIzaSyANMC1mbIo0LG2ODqJZSHZbt9rngYi2EyY';
   const apiUrl = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
 
   // Convert blob to base64
