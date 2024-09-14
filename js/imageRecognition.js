@@ -1,94 +1,62 @@
+// We need to add these script tags to the HTML file:
+// <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+// <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
+let model;
+
+// Load the MobileNet model
+async function loadModel() {
+  model = await mobilenet.load();
+  console.log('MobileNet model loaded');
+}
+
+// Call loadModel when the page loads
+loadModel();
+
 // Function to handle image upload
 function handleImageUpload(event) {
   const file = event.target.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      recognizeImage(e.target.result);
+      const img = document.createElement('img');
+      img.onload = function() {
+        recognizeImage(img);
+      }
+      img.src = e.target.result;
     }
     reader.readAsDataURL(file);
   }
 }
 
-// Function to send image to Gemini AI API
-async function recognizeImage(imageDataUrl) {
-  const apiKey = 'AIzaSyAwhbybAwJlsAgAyZppD93cgQ_07ROKj5o';
-  const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent';
-
-  const requestBody = {
-    contents: [
-      {
-        parts: [
-          { text: "Analyze this image and provide a detailed description of what you see. Include the main subject, any notable features, and potential categories it might fall under." },
-          {
-            inline_data: {
-              mime_type: "image/jpeg",
-              data: imageDataUrl.split(',')[1]
-            }
-          }
-        ]
-      }
-    ],
-    generationConfig: {
-      temperature: 0.4,
-      topK: 32,
-      topP: 1,
-      maxOutputTokens: 1024,
-    }
-  };
+// Function to recognize the image
+async function recognizeImage(imgElement) {
+  if (!model) {
+    console.log('Model not loaded yet, please wait and try again.');
+    return;
+  }
 
   try {
-    const response = await fetch(`${apiUrl}?key=${apiKey}`, {
-      method: 'POST',
-      body: JSON.stringify(requestBody),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const result = processGeminiResponse(data);
-    displayRecognitionResult(result);
+    const predictions = await model.classify(imgElement);
+    displayRecognitionResult(predictions[0]);
   } catch (error) {
     console.error('Error during image recognition:', error);
     displayRecognitionResult({
-      name: 'Error',
-      confidence: 0,
-      category: 'Error',
+      className: 'Error',
+      probability: 0,
       details: `An error occurred during image recognition: ${error.message}`
     });
   }
-}
-
-// Function to process Gemini API response
-function processGeminiResponse(data) {
-  const text = data.candidates[0].content.parts[0].text;
-  
-  // Extract key information from the text
-  const name = text.split('.')[0].trim();
-  const category = text.match(/category: (.+?)[.,]/i)?.[1] || 'Unknown';
-  const confidence = 0.9; // Gemini doesn't provide a confidence score, so we use a placeholder
-
-  return {
-    name,
-    confidence,
-    category,
-    details: text
-  };
 }
 
 // Function to display recognition result
 function displayRecognitionResult(result) {
   const resultDiv = document.createElement('div');
   resultDiv.innerHTML = `
-    <h3>${result.name}</h3>
-    <p>Confidence: ${(result.confidence * 100).toFixed(2)}%</p>
-    <p>Category: ${result.category}</p>
-    <p>${result.details}</p>
+    <h3>${result.className}</h3>
+    <p>Confidence: ${(result.probability * 100).toFixed(2)}%</p>
+    <p>Category: Image Classification</p>
+    <p>Top prediction from MobileNet model</p>
   `;
   document.getElementById('app').appendChild(resultDiv);
 }
