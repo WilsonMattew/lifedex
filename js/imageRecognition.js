@@ -1,62 +1,44 @@
-
 // Function to handle image upload
 function handleImageUpload(event) {
   const file = event.target.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onload = function(e) {
-      const img = document.createElement('img');
-      img.src = e.target.result;
-      img.onload = function() {
-        // Resize image if needed
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = 300; // Set desired width
-        canvas.height = canvas.width * img.height / img.width;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-        // Convert canvas to blob
-        canvas.toBlob(function(blob) {
-          // Send blob to image recognition API
-          recognizeImage(blob);
-        }, 'image/jpeg', 0.8);
-      }
+      recognizeImage(e.target.result);
     }
     reader.readAsDataURL(file);
   }
 }
 
-// Function to send image to recognition API
-async function recognizeImage(imageBlob) {
-  const apiKey = 'AIzaSyANMC1mbIo0LG2ODqJZSHZbt9rngYi2EyY';
-  const apiUrl = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
-
-  // Convert blob to base64
-  const base64Image = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(imageBlob);
-  });
+// Function to send image to Gemini AI API
+async function recognizeImage(imageDataUrl) {
+  const apiKey = 'AIzaSyAwhbybAwJlsAgAyZppD93cgQ_07ROKj5o';
+  const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent';
 
   const requestBody = {
-    requests: [
+    contents: [
       {
-        image: {
-          content: base64Image
-        },
-        features: [
+        parts: [
+          { text: "Analyze this image and provide a detailed description of what you see. Include the main subject, any notable features, and potential categories it might fall under." },
           {
-            type: 'LABEL_DETECTION',
-            maxResults: 5
+            inline_data: {
+              mime_type: "image/jpeg",
+              data: imageDataUrl.split(',')[1]
+            }
           }
         ]
       }
-    ]
+    ],
+    generationConfig: {
+      temperature: 0.4,
+      topK: 32,
+      topP: 1,
+      maxOutputTokens: 1024,
+    }
   };
 
   try {
-    const response = await fetch(apiUrl, {
+    const response = await fetch(`${apiUrl}?key=${apiKey}`, {
       method: 'POST',
       body: JSON.stringify(requestBody),
       headers: {
@@ -64,25 +46,41 @@ async function recognizeImage(imageBlob) {
       }
     });
 
-    const data = await response.json();
-    const result = data.responses[0].labelAnnotations[0];
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-    displayRecognitionResult({
-      name: result.description,
-      confidence: result.score,
-      category: 'Object',
-      details: 'Additional details would go here.'
-    });
+    const data = await response.json();
+    const result = processGeminiResponse(data);
+    displayRecognitionResult(result);
   } catch (error) {
     console.error('Error during image recognition:', error);
     displayRecognitionResult({
       name: 'Error',
       confidence: 0,
       category: 'Error',
-      details: 'An error occurred during image recognition.'
+      details: `An error occurred during image recognition: ${error.message}`
     });
   }
 }
+
+// Function to process Gemini API response
+function processGeminiResponse(data) {
+  const text = data.candidates[0].content.parts[0].text;
+  
+  // Extract key information from the text
+  const name = text.split('.')[0].trim();
+  const category = text.match(/category: (.+?)[.,]/i)?.[1] || 'Unknown';
+  const confidence = 0.9; // Gemini doesn't provide a confidence score, so we use a placeholder
+
+  return {
+    name,
+    confidence,
+    category,
+    details: text
+  };
+}
+
 // Function to display recognition result
 function displayRecognitionResult(result) {
   const resultDiv = document.createElement('div');
